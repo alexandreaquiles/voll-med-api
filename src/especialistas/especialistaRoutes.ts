@@ -17,10 +17,10 @@ especialistaRouter.get('/', especialistas)
 especialistaRouter.post('/', verificaTokenJWT(Role.clinica), criarEspecialista)
 especialistaRouter.get('/busca', buscarEspecialistas)
 especialistaRouter.get('/:id', especialistaById)
+// O controller confere se é o próprio especialista ou a clínica dele
 especialistaRouter.put(
   '/:id',
-  verificaTokenJWT(Role.especialista),
-  verificaProprioUsuario,
+  verificaTokenJWT(Role.especialista, Role.clinica),
   atualizarEspecialista
 )
 especialistaRouter.delete(

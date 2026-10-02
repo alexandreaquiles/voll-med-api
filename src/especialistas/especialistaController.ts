@@ -5,6 +5,7 @@ import { mapeiaPlano } from '../utils/planoSaudeUtils.js'
 import { Endereco } from '../enderecos/enderecoEntity.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
 import { Role } from '../auth/roles.js'
+import { Clinica } from '../clinicas/clinicaEntity.js'
 import { encryptPassword } from '../utils/senhaUtils.js'
 
 // Get All
@@ -54,10 +55,16 @@ export const criarEspecialista = async (
     })
   }
 
+  // O especialista pertence à clínica que o cadastrou, nunca a uma clínica enviada no corpo
+  const clinica = await AppDataSource.manager.findOneBy(Clinica, { id: req.userId })
+  if (clinica !== null) {
+    especialista.clinica = clinica
+  }
+
   try {
     await AppDataSource.manager.save(Especialista, especialista)
 
-    const { senha: _senha, ...especialistaSemSenha } = especialista
+    const { senha: _senha, clinica: _clinica, ...especialistaSemSenha } = especialista
     res.status(200).json(especialistaSemSenha)
   } catch (error) {
     if ((await AppDataSource.manager.findOne(Especialista, { where: { crm } })) != null) {
@@ -83,7 +90,7 @@ export const especialistaById = async (req: Request, res: Response): Promise<voi
 
 // Put especialista/:id
 export const atualizarEspecialista = async (req: Request, res: Response): Promise<void> => {
-  let { nome, crm, imagem, especialidade, email, telefone, estaAtivo, possuiPlanoSaude, planosSaude, senha } = req.body
+  let { nome, crm, imagem, especialidade, email, telefone, estaAtivo, possuiPlanoSaude, planosSaude } = req.body
   const { id } = req.params
 
   if (possuiPlanoSaude === true && planosSaude !== undefined) {
@@ -91,22 +98,30 @@ export const atualizarEspecialista = async (req: Request, res: Response): Promis
     planosSaude = mapeiaPlano(planosSaude)
   }
 
-  const especialistaUpdate = await AppDataSource.manager.findOneBy(
-    Especialista,
-    {
-      id
-    }
-  )
+  const especialistaUpdate = await AppDataSource.manager.findOne(Especialista, {
+    where: { id },
+    relations: { clinica: true }
+  })
   if (especialistaUpdate !== null) {
+    const ehOProprio = req.userRole === Role.especialista && especialistaUpdate.id === req.userId
+    const ehASuaClinica = req.userRole === Role.clinica && especialistaUpdate.clinica?.id === req.userId
+    if (!ehOProprio && !ehASuaClinica) {
+      throw new AppError('Não autorizado', Status.FORBIDDEN)
+    }
+
     especialistaUpdate.nome = nome
-    especialistaUpdate.crm = crm
-    especialistaUpdate.estaAtivo = estaAtivo
     especialistaUpdate.imagem = imagem
-    especialistaUpdate.especialidade = especialidade
     especialistaUpdate.email = email
     especialistaUpdate.telefone = telefone
     especialistaUpdate.possuiPlanoSaude = possuiPlanoSaude
     especialistaUpdate.planosSaude = planosSaude
+
+    // CRM, especialidade e situação só podem ser alterados pela clínica
+    if (ehASuaClinica) {
+      especialistaUpdate.crm = crm
+      especialistaUpdate.especialidade = especialidade
+      especialistaUpdate.estaAtivo = estaAtivo
+    }
 
     await AppDataSource.manager.save(Especialista, especialistaUpdate)
     res.json(especialistaUpdate)

@@ -58,19 +58,18 @@ export const criarPaciente = async (
     const pacienteSanitizado: Paciente = sanitizacaoPaciente(pacienteData)
     await pacienteSchema.validate(pacienteSanitizado);
 
+    // Só os campos que o paciente pode definir. Papel, situação, histórico médico e imagem
+    // não vêm do corpo da requisição.
     let {
       cpf,
       nome,
       email,
       senha,
-      estaAtivo,
       possuiPlanoSaude,
       endereco,
       telefone,
       planosSaude,
-      imagemUrl,
-      imagem,
-      historico
+      imagemUrl
     } = pacienteSanitizado
 
     if (!CPFValido(cpf)) {
@@ -97,10 +96,10 @@ export const criarPaciente = async (
       senhaCriptografada,
       telefone,
       planosSaude,
-      estaAtivo,
+      true,
       imagemUrl,
-      imagem,
-      historico
+      undefined,
+      undefined
     )
     paciente.possuiPlanoSaude = possuiPlanoSaude
     const enderecoPaciente = new Endereco()
@@ -192,25 +191,18 @@ export const atualizarPaciente = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  // Só os dados de contato e de plano de saúde. CPF, situação, histórico médico,
+  // imagem e papel não podem ser alterados pelo próprio paciente.
   let {
     nome,
     email,
-    senha,
-    estaAtivo,
     telefone,
     possuiPlanoSaude,
     planosSaude,
-    cpf,
-    imagemUrl,
-    imagem,
-    historico
+    imagemUrl
   } = req.body
 
   const { id } = req.params
-
-  if (!CPFValido(cpf)) {
-    throw new AppError('CPF Inválido!', Status.BAD_REQUEST)
-  }
 
   if (possuiPlanoSaude === true && planosSaude !== undefined) {
     // transforma array de numbers em array de strings com os nomes dos planos definidos no enum correspondente
@@ -226,16 +218,12 @@ export const atualizarPaciente = async (
     if (paciente === null) {
       res.status(404).json('Paciente não encontrado!')
     } else {
-      paciente.cpf = cpf
       paciente.nome = nome
       paciente.email = email
       paciente.possuiPlanoSaude = possuiPlanoSaude
       paciente.telefone = telefone
       paciente.planosSaude = planosSaude
-      paciente.estaAtivo = estaAtivo
       paciente.imagemUrl = imagemUrl
-      paciente.imagem = imagem
-      paciente.historico = historico
 
       await AppDataSource.manager.save(Paciente, paciente)
       res.status(200).json(paciente)
