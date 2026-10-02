@@ -13,12 +13,30 @@ import {
 import { mapeiaLembretes, normalizaMotivoCancelamento } from '../utils/consultaUtils.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
 import { consultaSemDadosSensiveis, filtroDeConsultasVisiveis, participaDaConsulta } from './consultaAcesso.js'
+import { Role } from '../auth/roles.js'
+import { Especialista } from '../especialistas/EspecialistaEntity.js'
 
 export const criaConsulta = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const { especialista, paciente, data, desejaLembrete, lembretes } = req.body
+  let { especialista, paciente, data, desejaLembrete, lembretes } = req.body
+
+  // O paciente só marca consulta para si mesmo; a clínica, só com os seus especialistas
+  if (req.userRole === Role.paciente) {
+    if (paciente !== undefined && paciente !== req.userId) {
+      throw new AppError('Não autorizado', Status.FORBIDDEN)
+    }
+    paciente = req.userId
+  } else {
+    const especialistaDaConsulta = await AppDataSource.manager.findOne(Especialista, {
+      where: { id: especialista },
+      relations: { clinica: true }
+    })
+    if (especialistaDaConsulta?.clinica?.id !== req.userId) {
+      throw new AppError('Não autorizado', Status.FORBIDDEN)
+    }
+  }
 
   if (!validaClinicaEstaAberta(data)) {
     throw new AppError('A clinica não está aberta nesse horário')

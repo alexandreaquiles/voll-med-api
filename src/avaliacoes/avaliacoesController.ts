@@ -18,11 +18,16 @@ export const criaAvaliacao = async (req: Request, res: Response): Promise<void> 
   const {
     idEspecialista, idPaciente, descricao, nota
   } = req.body
+
+  // A avaliação é sempre em nome do paciente logado
+  if (idPaciente !== undefined && idPaciente !== req.userId) {
+    throw new AppError('Não autorizado', Status.FORBIDDEN)
+  }
   const especialista = await AppDataSource.manager.findOneBy(Especialista, {
     id: idEspecialista
   })
   const paciente = await AppDataSource.manager.findOneBy(Paciente, {
-    id: idPaciente
+    id: req.userId
   })
 
   const avaliacao = new Avaliacoes()

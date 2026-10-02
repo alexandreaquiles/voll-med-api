@@ -87,7 +87,7 @@ Os testes usam SQLite em memória e um Redis simulado: não precisam do `.env`, 
 
 ## Marcando consultas pela API
 
-Além do seed, dá para criar consultas com `POST /consulta`. A API valida:
+Além do seed, dá para criar consultas com `POST /consulta`, com o token de um paciente (que só marca para si mesmo) ou de uma clínica (que só marca com os seus especialistas). A API valida:
 
 - a clínica funciona das **07h às 19h em UTC** (04h às 16h em Brasília), de segunda a sábado;
 - a consulta precisa ser marcada com pelo menos 30 minutos de antecedência;

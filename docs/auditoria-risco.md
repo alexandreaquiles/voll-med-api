@@ -70,10 +70,11 @@ Cada falha ganhou testes de integração que a reproduziam. Os testes falharam c
 | Exposição de dados sensíveis | `src/test/dadosSensiveis.test.ts` | 13 de 13 falhavam | listagens exigem token e mostram só os pacientes atendidos, sem CPF, histórico e senha; cadastros não devolvem senha |
 | Mass assignment | `src/test/massAssignment.test.ts` | 5 de 6 falhavam | cada operação aceita só os campos que cabem ao papel autenticado |
 
+Depois, `POST /consulta` e `POST /avaliacoes`, que recebiam o id do paciente no corpo sem exigir token, passaram a exigir login: o paciente só marca consultas e avalia em nome próprio, e a clínica só marca consultas com os seus especialistas (`src/test/agendamentoEAvaliacao.test.ts`).
+
 Além das rotas citadas acima, a correção do BOLA cobriu casos do mesmo tipo encontrados durante o trabalho: `PATCH /especialista/:id` (sem token nenhum), `DELETE /especialista/:id`, as rotas de imagem do paciente e `PUT/DELETE/POST /clinica/:id`.
 
 ### Pendências
 
 - **Senhas com criptografia reversível:** continuam em `src/utils/senhaUtils.ts`. Trocar por hash (bcrypt ou argon2) exige migrar as senhas já gravadas.
-- **Ids no corpo da requisição:** `POST /consulta` e `POST /avaliacoes` recebem o id do paciente no corpo e não exigem token, então qualquer pessoa marca consultas e publica avaliações em nome de outro paciente.
 - **Chaves JWT:** os tokens são assinados com `SECRET_KEY` e verificados com `SECRET_JWT`. Com valores diferentes, nenhum token é aceito.
