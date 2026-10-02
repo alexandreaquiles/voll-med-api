@@ -54,3 +54,37 @@ describe('listagem de especialistas (GET /especialista)', () => {
     expect(resposta.body[0]).not.toHaveProperty('senha')
   })
 })
+
+describe('planos de saúde do especialista (POST /especialista)', () => {
+  const cadastra = async (crm: string, planosSaude: unknown[]): Promise<request.Response> =>
+    await request(app)
+      .post('/especialista')
+      .set(...autorizacao(clinicaA))
+      .send({
+        nome: 'Dra Plano', crm, imagem: '', especialidade: 'Pediatria', email: `${crm}@teste.com`,
+        telefone: '11999999999', estaAtivo: true, senha: 'Senha@123', possuiPlanoSaude: true, planosSaude
+      })
+
+  const planosGravados = async (id: string): Promise<string[]> =>
+    (await dataSource.manager.findOneByOrFail(Especialista, { id })).planosSaude as unknown as string[]
+
+  test('grava os planos informados pelo nome', async () => {
+    const resposta = await cadastra('CRM-P1', ['Sulamerica', 'Biosaude'])
+
+    expect(resposta.status).toBe(200)
+    expect(await planosGravados(resposta.body.id)).toEqual(['Sulamerica', 'Biosaude'])
+  })
+
+  test('grava o nome dos planos informados pelo número', async () => {
+    const resposta = await cadastra('CRM-P2', [0, 4])
+
+    expect(resposta.status).toBe(200)
+    expect(await planosGravados(resposta.body.id)).toEqual(['Sulamerica', 'Biosaude'])
+  })
+
+  test('recusa plano inexistente', async () => {
+    const resposta = await cadastra('CRM-P3', ['Plano Inventado'])
+
+    expect(resposta.status).toBe(400)
+  })
+})
