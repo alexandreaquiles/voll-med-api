@@ -37,7 +37,12 @@ export class Consulta {
   @Column({ name: 'motivo_cancelamento', nullable: true })
     motivoCancelamento: string
 
-  cancelar (motivo: string): void {
-    this.motivoCancelamento = motivo
+  // A consulta cancelada continua no banco, para os indicadores de gestão (src/insights)
+  @Column({ name: 'cancelada_em', type: 'datetime', nullable: true })
+    canceladaEm: Date | null
+
+  cancelar (motivo: string | null): void {
+    this.motivoCancelamento = motivo as string
+    this.canceladaEm = new Date()
   }
 }

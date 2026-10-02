@@ -36,9 +36,11 @@ export async function criaClinica (dataSource: DataSource, nome: string): Promis
   return await dataSource.manager.save(Clinica, clinica)
 }
 
-export async function criaEspecialista (dataSource: DataSource, nome: string, crm: string, clinica?: Clinica): Promise<Especialista> {
+export async function criaEspecialista (
+  dataSource: DataSource, nome: string, crm: string, clinica?: Clinica, especialidade = 'Clínico Geral'
+): Promise<Especialista> {
   const especialista = new Especialista(
-    nome, crm, '', true, 'Clínico Geral', `${crm}@teste.com`, '11999999999', false, null, encryptPassword('Senha@123')
+    nome, crm, '', true, especialidade, `${crm}@teste.com`, '11999999999', false, null, encryptPassword('Senha@123')
   )
   especialista.endereco = await criaEndereco(dataSource)
   if (clinica !== undefined) {
@@ -56,12 +58,20 @@ export async function criaPaciente (dataSource: DataSource, nome: string, cpf: s
   return await dataSource.manager.save(Paciente, paciente)
 }
 
-export async function criaConsulta (dataSource: DataSource, paciente: Paciente, especialista: Especialista): Promise<Consulta> {
+export async function criaConsulta (
+  dataSource: DataSource,
+  paciente: Paciente,
+  especialista: Especialista,
+  { data, motivoCancelamento }: { data?: Date, motivoCancelamento?: string } = {}
+): Promise<Consulta> {
   const consulta = new Consulta()
   consulta.paciente = paciente
   consulta.especialista = especialista
-  consulta.data = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  consulta.data = data ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   consulta.desejaLembrete = false
+  if (motivoCancelamento !== undefined) {
+    consulta.cancelar(motivoCancelamento)
+  }
   return await dataSource.manager.save(Consulta, consulta)
 }
 

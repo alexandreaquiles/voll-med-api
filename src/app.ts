@@ -9,6 +9,7 @@ import rotaClinica from './clinicas/clinicaRoutes.js'
 import rotaConsulta from './consultas/consultaRoutes.js'
 import errorMiddleware from './error/errorMiddleware.js'
 import rotaEspecialista from './especialistas/especialistaRoutes.js'
+import rotaInsights from './insights/insightsRoutes.js'
 import rotaPaciente from './pacientes/pacienteRoutes.js'
 import rotaPlanoDeSaude from './planosDeSaude/planosDeSaudeRoutes.js'
 
@@ -41,6 +42,7 @@ rotaAvaliacoes(app)
 rotaClinica(app)
 rotaConsulta(app)
 rotaPlanoDeSaude(app)
+rotaInsights(app)
 app.use(errorMiddleware)
 
 export default app

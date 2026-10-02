@@ -43,6 +43,8 @@ O README indica Node 16; o Dockerfile usa `node:19`.
   - Atenção: os tokens são **assinados** com `SECRET_KEY`, mas **verificados** com `SECRET_JWT`.
 - **Senhas** são criptografadas de forma reversível com `SECRET_KEY_CRYPTO` (`utils/senhaUtils.ts`: `encryptPassword` / `decryptPassword`), e não armazenadas como hash.
 - **Entrada de paciente** passa por `pacienteSanitizations.ts`, depois pelo schema Yup em `pacienteYupSchema.ts`, com validação de CPF em `validacaoCPF.ts`.
+- **Cancelamento de consulta** não apaga o registro: `DELETE /consulta/:id` chama `consulta.cancelar(motivo)`, que preenche `canceladaEm` e `motivoCancelamento` (nome do enum `MotivoCancelamento`, aceito também pelo número). Listagens e checagens de horário livre filtram `canceladaEm: IsNull()`.
+- **Resumo de Gestão** (`src/insights/`, rota `GET /admin/insights?mes=AAAA-MM`, só para clínica): `calculaIndicadores` agrega as consultas dos especialistas da clínica por mês e especialidade (pela data da consulta, em UTC), e um `GeradorDeResumo` transforma os indicadores em até 3 linhas. Hoje é o `GeradorDeResumoSimulado`, com regras fixas; uma LLM pode substituí-lo implementando a mesma interface. Os indicadores não têm dados de pacientes.
 - **Uploads**: o multer grava em `tmp/uploads/` (`src/config/multer.ts`), e `tmp/` é servido estaticamente.
 - `src/docs/http_requests.json` é uma coleção de requisições de exemplo para os endpoints.
 

@@ -166,7 +166,8 @@ describe('BOLA em /consulta/:id', () => {
       .send({ motivoCancelamento: 'outros' })
 
     expect(resposta.status).toBe(403)
-    expect(await dataSource.manager.findOneBy(Consulta, { id: consultaDoBruno.id })).not.toBeNull()
+    const consultaNoBanco = await dataSource.manager.findOneBy(Consulta, { id: consultaDoBruno.id })
+    expect(consultaNoBanco?.canceladaEm).toBeNull()
   })
 })
 

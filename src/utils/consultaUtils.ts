@@ -33,4 +33,16 @@ function mapeiaMotivoCancelamento (motivos: any[]): string[] {
   })
 }
 
-export { MotivoCancelamento, Lembrete, mapeiaMotivoCancelamento, mapeiaLembretes }
+// Aceita o motivo pelo número ou pelo nome do enum e devolve o nome, ou null se não informado
+function normalizaMotivoCancelamento (motivo: unknown): string | null {
+  if (motivo === undefined || motivo === null || motivo === '') {
+    return null
+  }
+  const nome = typeof motivo === 'number' ? MotivoCancelamento[motivo] : motivo
+  if (typeof nome !== 'string' || !(nome in MotivoCancelamento) || !isNaN(Number(nome))) {
+    throw new AppError(`O motivo ${String(motivo)} não existe!`)
+  }
+  return nome
+}
+
+export { MotivoCancelamento, Lembrete, mapeiaMotivoCancelamento, mapeiaLembretes, normalizaMotivoCancelamento }

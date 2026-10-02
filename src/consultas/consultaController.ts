@@ -1,4 +1,5 @@
 import { type Request, type Response } from 'express'
+import { IsNull } from 'typeorm'
 import { AppDataSource } from '../data-source.js'
 import { Consulta } from './consultaEntity.js'
 import {
@@ -9,7 +10,7 @@ import {
   pacienteEstaDisponivel,
   especialistaEstaDisponivel
 } from './consultaValidacoes.js'
-import { mapeiaLembretes } from '../utils/consultaUtils.js'
+import { mapeiaLembretes, normalizaMotivoCancelamento } from '../utils/consultaUtils.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
 import { consultaSemDadosSensiveis, filtroDeConsultasVisiveis, participaDaConsulta } from './consultaAcesso.js'
 
@@ -69,7 +70,7 @@ export const listaConsultas = async (
   if (filtro === null) {
     throw new AppError('Não autorizado', Status.FORBIDDEN)
   }
-  const consultas = await AppDataSource.manager.find(Consulta, { where: filtro })
+  const consultas = await AppDataSource.manager.find(Consulta, { where: { ...filtro, canceladaEm: IsNull() } })
 
   return res.json(consultas.map(consultaSemDadosSensiveis))
 }
@@ -117,8 +118,12 @@ export const deletaConsulta = async (
     )
   }
 
-  consulta.cancelar = motivoCancelamento
+  if (consulta.canceladaEm != null) {
+    throw new AppError('Consulta já cancelada')
+  }
 
-  await AppDataSource.manager.delete(Consulta, { id })
+  consulta.cancelar(normalizaMotivoCancelamento(motivoCancelamento))
+
+  await AppDataSource.manager.save(Consulta, consulta)
   res.json('Consulta cancelada com sucesso')
 }
