@@ -20,8 +20,9 @@ const upload = multer(multerConfig)
 
 export const pacienteRouter = Router()
 
-pacienteRouter.get('/', exibeTodosPacientes)
-pacienteRouter.get('/consulta-por-paciente', consultaPorPaciente)
+// Listagens só para quem atende pacientes, e só com os pacientes atendidos
+pacienteRouter.get('/', verificaTokenJWT(Role.clinica, Role.especialista), exibeTodosPacientes)
+pacienteRouter.get('/consulta-por-paciente', verificaTokenJWT(Role.clinica, Role.especialista), consultaPorPaciente)
 pacienteRouter.post('/', criarPaciente)
 // Rotas com :id só podem ser usadas pelo próprio paciente
 const apenasOProprioPaciente = [verificaTokenJWT(Role.paciente), verificaProprioUsuario]

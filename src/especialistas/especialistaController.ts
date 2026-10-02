@@ -56,7 +56,9 @@ export const criarEspecialista = async (
 
   try {
     await AppDataSource.manager.save(Especialista, especialista)
-    res.status(200).json(especialista)
+
+    const { senha: _senha, ...especialistaSemSenha } = especialista
+    res.status(200).json(especialistaSemSenha)
   } catch (error) {
     if ((await AppDataSource.manager.findOne(Especialista, { where: { crm } })) != null) {
       res.status(422).json({ message: 'Crm já cadastrado' })

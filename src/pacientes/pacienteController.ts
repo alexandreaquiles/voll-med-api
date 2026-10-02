@@ -10,15 +10,32 @@ import { AppError, Status } from '../error/ErrorHandler.js'
 import { encryptPassword } from '../utils/senhaUtils.js'
 import { pacienteSchema } from './pacienteYupSchema.js';
 import { sanitizacaoPaciente } from './pacienteSanitizations.js'
+import { filtroDeConsultasVisiveis, resumoDoPaciente } from '../consultas/consultaAcesso.js'
+
+// Pacientes atendidos pelo especialista ou pela clínica autenticados, sem dados sensíveis
+async function pacientesAtendidos (req: Request): Promise<Array<ReturnType<typeof resumoDoPaciente>>> {
+  const filtro = filtroDeConsultasVisiveis(req.userId, req.userRole)
+  if (filtro === null) {
+    return []
+  }
+  const consultas = await AppDataSource.manager.find(Consulta, { where: filtro, relations: { paciente: true } })
+
+  const pacientes = new Map<string, Paciente>()
+  for (const { paciente } of consultas) {
+    if (paciente != null) {
+      pacientes.set(paciente.id, paciente)
+    }
+  }
+  return [...pacientes.values()].map(resumoDoPaciente)
+}
 
 export const consultaPorPaciente = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   const { userInput } = req.query;
-  const query = `SELECT * FROM paciente WHERE nome = ?`;
   try {
-    const listaPacientes = await AppDataSource.manager.query(query, [userInput]);
+    const listaPacientes = (await pacientesAtendidos(req)).filter((paciente) => paciente.nome === userInput);
     if (listaPacientes.length === 0) {
       res.status(404).json('Paciente não encontrado!');
     } else {
@@ -119,13 +136,7 @@ export const exibeTodosPacientes = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const tabelaPaciente = AppDataSource.getRepository(Paciente)
-  const allPacientes = await tabelaPaciente.find({ relations: ['imagem'] })
-  if (allPacientes.length === 0) {
-    res.status(200).json([])
-  } else {
-    res.status(200).json(allPacientes)
-  }
+  res.status(200).json(await pacientesAtendidos(req))
 }
 
 export const lerPaciente = async (

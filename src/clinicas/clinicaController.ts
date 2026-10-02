@@ -37,7 +37,9 @@ export const criarClinica = async (req: Request, res: Response): Promise<void> =
   }
 
   await AppDataSource.manager.save(Clinica, clinica)
-  res.json(clinica)
+
+  const { senha: _senha, ...clinicaSemSenha } = clinica
+  res.json(clinicaSemSenha)
 }
 
 export const listarClinicas = async (req: Request, res: Response): Promise<void> => {

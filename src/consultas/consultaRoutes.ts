@@ -6,8 +6,8 @@ import { verificaTokenJWT } from '../auth/middlewares/authMiddlewares.js'
 
 export const consultaRouter = Router()
 consultaRouter.post('/', criaConsulta)
-consultaRouter.get('/', listaConsultas)
-// Os controllers conferem se o usuário participa da consulta
+consultaRouter.get('/', verificaTokenJWT(), listaConsultas)
+// Os controllers só mostram as consultas de que o usuário participa
 consultaRouter.get('/:id', verificaTokenJWT(), buscaConsultaPorId)
 consultaRouter.delete('/:id', verificaTokenJWT(), deletaConsulta)
 

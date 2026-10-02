@@ -11,21 +11,7 @@ import {
 } from './consultaValidacoes.js'
 import { mapeiaLembretes } from '../utils/consultaUtils.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
-import { Role } from '../auth/roles.js'
-
-// Só o paciente, o especialista e a clínica do especialista podem acessar a consulta
-function participaDaConsulta (consulta: Consulta, userId?: string, role?: string): boolean {
-  switch (role) {
-    case Role.paciente:
-      return consulta.paciente?.id === userId
-    case Role.especialista:
-      return consulta.especialista?.id === userId
-    case Role.clinica:
-      return consulta.especialista?.clinica?.id === userId
-    default:
-      return false
-  }
-}
+import { consultaSemDadosSensiveis, filtroDeConsultasVisiveis, participaDaConsulta } from './consultaAcesso.js'
 
 export const criaConsulta = async (
   req: Request,
@@ -79,9 +65,13 @@ export const listaConsultas = async (
   req: Request,
   res: Response
 ): Promise<Response> => {
-  const consultas = await AppDataSource.manager.find(Consulta)
+  const filtro = filtroDeConsultasVisiveis(req.userId, req.userRole)
+  if (filtro === null) {
+    throw new AppError('Não autorizado', Status.FORBIDDEN)
+  }
+  const consultas = await AppDataSource.manager.find(Consulta, { where: filtro })
 
-  return res.json(consultas)
+  return res.json(consultas.map(consultaSemDadosSensiveis))
 }
 
 //! Não devolve resposta ao cliente, caso não encontre a consulta
@@ -99,7 +89,7 @@ export const buscaConsultaPorId = async (req: Request, res: Response
   if (!participaDaConsulta(consulta, req.userId, req.userRole)) {
     throw new AppError('Não autorizado', Status.FORBIDDEN)
   }
-  res.json(consulta)
+  res.json(consultaSemDadosSensiveis(consulta))
 }
 
 export const deletaConsulta = async (
