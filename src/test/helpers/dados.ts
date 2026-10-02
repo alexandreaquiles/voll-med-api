@@ -14,7 +14,7 @@ import { encryptPassword } from '../../utils/senhaUtils.js'
 // Mesmo formato de access.cria (src/auth/tokens.ts). Não importa tokens.ts aqui porque
 // esse import carregaria o ClienteRedis real antes de iniciaApp() registrar o mock.
 export function tokenDe (entidade: { id: string, role: Role }): string {
-  return jwt.sign({ id: entidade.id, role: entidade.role }, process.env.SECRET_KEY as string, { expiresIn: '20m' })
+  return jwt.sign({ id: entidade.id, role: entidade.role }, process.env.SECRET_JWT as string, { expiresIn: '20m' })
 }
 
 async function criaEndereco (dataSource: DataSource): Promise<Endereco> {

@@ -22,7 +22,7 @@ Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O p
 
 ## Ambiente obrigatório
 
-`src/utils/serverUtils.ts` lança um erro na inicialização se `DB_TYPE`, `SECRET_JWT`, `SECRET_KEY_CRYPTO`, `DB_PASSWORD` e `DB_DATABASE` não estiverem definidas. Outras variáveis usadas: `DB_HOST`, `DB_PORT`, `DB_USER`, `SERVER_PORT` (padrão 3000; o `voll-med-front` espera a API nessa porta), `SECRET_KEY`. As variáveis são lidas do `.env`, que está no gitignore; o `.env.example` traz os valores que batem com o `docker-compose.yaml` (MySQL `vollmed`/`vollmed`, banco `vollmed`).
+`src/utils/serverUtils.ts` lança um erro na inicialização se `DB_TYPE`, `SECRET_JWT`, `SECRET_KEY_CRYPTO`, `DB_PASSWORD` e `DB_DATABASE` não estiverem definidas. Outras variáveis usadas: `DB_HOST`, `DB_PORT`, `DB_USER`, `SERVER_PORT` (padrão 3000; o `voll-med-front` espera a API nessa porta). As variáveis são lidas do `.env`, que está no gitignore; o `.env.example` traz os valores que batem com o `docker-compose.yaml` (MySQL `vollmed`/`vollmed`, banco `vollmed`).
 
 - `DB_TYPE=sqlite` faz o `src/data-source.ts` usar SQLite em `./src/database/database.sqlite` (ou em `DB_SQLITE_PATH`; a pasta é criada se não existir). Qualquer outro valor usa MySQL. Ambos usam `synchronize: true` e não têm migrations, então mudanças nas entidades alteram o schema diretamente.
 - A URL do Redis vem de `REDIS_URL` (padrão `redis://localhost:6379`), lida em `src/services/redis/redisClient.ts`. Os clientes Redis são criados já no import de `src/auth/tokens.ts`, antes do `dotenv.config()` do `server.ts`, por isso o `redisClient.ts` carrega o `.env` por conta própria.
@@ -41,7 +41,6 @@ Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O p
   - Quem vê quais consultas (e, por consequência, quais pacientes) está em `src/consultas/consultaAcesso.ts`: o paciente vê as próprias, o especialista as que atende e a clínica as dos seus especialistas.
   - Respostas com dados de paciente fora do próprio paciente usam `resumoDoPaciente` (sem CPF, histórico e senha). Nenhuma resposta devolve `senha`.
   - Controllers leem do `req.body` só os campos que o papel autenticado pode alterar. Histórico médico, CPF, situação e papel do paciente não são editáveis por ele; CRM, especialidade e situação do especialista, só pela clínica dele.
-  - Atenção: os tokens são **assinados** com `SECRET_KEY`, mas **verificados** com `SECRET_JWT`.
 - **Senhas** são criptografadas de forma reversível com `SECRET_KEY_CRYPTO` (`utils/senhaUtils.ts`: `encryptPassword` / `decryptPassword`), e não armazenadas como hash.
 - **Entrada de paciente** passa por `pacienteSanitizations.ts`, depois pelo schema Yup em `pacienteYupSchema.ts`, com validação de CPF em `validacaoCPF.ts`.
 - **Cancelamento de consulta** não apaga o registro: `DELETE /consulta/:id` chama `consulta.cancelar(motivo)`, que preenche `canceladaEm` e `motivoCancelamento` (nome do enum `MotivoCancelamento`, aceito também pelo número). Listagens e checagens de horário livre filtram `canceladaEm: IsNull()`.
@@ -53,7 +52,7 @@ Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O p
 
 Testes de integração em `src/test/*.test.ts`, com supertest contra o `app` exportado por `src/app.ts` (o `src/server.ts` só inicializa o banco e chama `listen`). Não precisam de banco nem de Redis externos:
 
-- `src/test/ambiente.ts` (`setupFiles` do Jest) define as variáveis de ambiente, com SQLite em memória (`DB_SQLITE_PATH=:memory:`) e o mesmo valor em `SECRET_KEY` e `SECRET_JWT`.
+- `src/test/ambiente.ts` (`setupFiles` do Jest) define as variáveis de ambiente, com SQLite em memória (`DB_SQLITE_PATH=:memory:`).
 - `iniciaApp()` (`src/test/helpers/app.ts`) troca o `ClienteRedis` por `RedisEmMemoria` via `jest.unstable_mockModule` e só então importa a aplicação dinamicamente. Por isso os testes importam `app` por ele, nunca diretamente.
 - `src/test/helpers/dados.ts` grava clínicas, especialistas, pacientes e consultas direto no banco (o cadastro de paciente pela API valida o CEP em um serviço externo) e gera tokens com `tokenDe()`.
 - O Jest roda em modo ESM (`ts-jest/presets/default-esm`). O `moduleNameMapper` remove a extensão `.js` dos imports relativos. Use `jest` e os demais globais importando de `@jest/globals`.

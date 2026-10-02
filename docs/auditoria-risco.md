@@ -72,9 +72,10 @@ Cada falha ganhou testes de integração que a reproduziam. Os testes falharam c
 
 Depois, `POST /consulta` e `POST /avaliacoes`, que recebiam o id do paciente no corpo sem exigir token, passaram a exigir login: o paciente só marca consultas e avalia em nome próprio, e a clínica só marca consultas com os seus especialistas (`src/test/agendamentoEAvaliacao.test.ts`).
 
+Os tokens de login também passaram a ser assinados e verificados com a mesma variável, `SECRET_JWT`. Antes eram assinados com `SECRET_KEY`, e com valores diferentes nenhum token era aceito (`src/test/autenticacao.test.ts`).
+
 Além das rotas citadas acima, a correção do BOLA cobriu casos do mesmo tipo encontrados durante o trabalho: `PATCH /especialista/:id` (sem token nenhum), `DELETE /especialista/:id`, as rotas de imagem do paciente e `PUT/DELETE/POST /clinica/:id`.
 
 ### Pendências
 
 - **Senhas com criptografia reversível:** continuam em `src/utils/senhaUtils.ts`. Trocar por hash (bcrypt ou argon2) exige migrar as senhas já gravadas.
-- **Chaves JWT:** os tokens são assinados com `SECRET_KEY` e verificados com `SECRET_JWT`. Com valores diferentes, nenhum token é aceito.
