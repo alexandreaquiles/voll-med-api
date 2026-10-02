@@ -22,9 +22,10 @@ function verificaTokenJWT (...role: Role[]) {
 
     // Verifica se o token é válido
     jwt.verify(token, process.env.SECRET_JWT, function (err, decoded) {
+      // 401 (e não 403) indica ao front que a sessão deve ser renovada com o refresh token
       if (err) {
         return res
-          .status(403)
+          .status(401)
           .json({ auth: false, message: 'Falha ao autenticar o token. Token expirou' })
       }
 

@@ -18,8 +18,11 @@ const blocklistAccessToken = new ClienteRedis('blocklist-access-token: ')
 
 function criaTokenJWT (id, role, [tempoQuantidade, tempoUnidade]: string[]): string {
   const payload = { id, role }
+  // jwtid torna cada token único: sem ele, dois logins no mesmo segundo gerariam o mesmo
+  // token, e o logout de uma sessão revogaria a outra
   const token = jwt.sign(payload, process.env.SECRET_JWT, {
-    expiresIn: tempoQuantidade + tempoUnidade
+    expiresIn: tempoQuantidade + tempoUnidade,
+    jwtid: crypto.randomUUID()
   })
   return token
 }

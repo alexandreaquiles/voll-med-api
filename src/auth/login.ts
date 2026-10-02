@@ -45,12 +45,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       throw new AppError('Sessão inválida. Faça login novamente', 401)
     }
 
-    const newAccessToken = access.cria(req.userId, autenticavel.role)
-    const newRefreshToken = await refresh.cria(req.userId)
+    const accessToken = access.cria(req.userId, autenticavel.role)
+    const refreshToken = await refresh.cria(req.userId)
     return res.status(200).json({
       auth: true,
-      newAccessToken,
-      newRefreshToken,
+      accessToken,
+      refreshToken,
       rota: autenticavel.rota
     })
   }

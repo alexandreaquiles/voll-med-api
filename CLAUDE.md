@@ -34,7 +34,8 @@ Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O p
 - **Erros**: lance `AppError(mensagem, Status.X)` de `src/error/ErrorHandler.ts`. O `express-async-errors` repassa rejeições dos handlers assíncronos para `src/error/errorMiddleware.ts`, que formata a resposta JSON. Alguns controllers ainda capturam erros e respondem diretamente.
 - **Autenticação** (`src/auth/`):
   - `Autenticaveis` é uma **ViewEntity** do TypeORM: um `UNION ALL` das tabelas `paciente`, `especialista` e `clinica`, com um dialeto SQL diferente para SQLite e MySQL. O login busca o email ali e retorna uma `rota` de acordo com o tipo de usuário.
-  - Access tokens são JWTs (20 min) revogados por meio de uma blocklist no Redis. Refresh tokens são tokens opacos aleatórios (5 dias) mantidos em uma allowlist no Redis (`tokens.ts`).
+  - Access tokens são JWTs (20 min, com `jti` aleatório para que cada login gere um token único) revogados por meio de uma blocklist no Redis. Refresh tokens são tokens opacos aleatórios (5 dias, uso único) mantidos em uma allowlist no Redis (`tokens.ts`). As expirações no Redis usam `EXAT` (instante), não `EX`.
+  - `POST /auth/login` e `POST /auth/refresh` devolvem `{ accessToken, refreshToken, rota }`. Token vencido ou inválido recebe 401 (o front então renova a sessão); falta de permissão recebe 403. `POST /auth/logout` exige o access token e o refresh token no corpo.
   - A view também traz `estaAtivo` (clínicas sempre 1): usuários inativos não entram nem renovam a sessão. `DELETE /paciente/:id` só desativa o paciente (mantém cadastro e consultas) e invalida o token usado.
   - Após 5 logins errados para o mesmo email, o login responde 429 por 15 minutos (`tentativasDeLogin.ts`, contador no Redis via `ClienteRedis.incrementa`).
   - As rotas são protegidas com `verificaTokenJWT(Role.x, ...)` (`middlewares/authMiddlewares.ts`), que define `req.userId` e `req.userRole` (tipados em `src/@types/express.d.ts`).

@@ -34,12 +34,13 @@ export default class ClienteRedis {
     })
   }
 
+  // dataExpiracao é um instante (timestamp Unix em segundos), por isso EXAT e não EX (duração)
   async adiciona (chave: string, valor, dataExpiracao): Promise<void> {
     if (valor == null && dataExpiracao == null) {
       dataExpiracao = jwt.decode(chave).exp
       valor = ''
     }
-    await this.cliente.set(this.prefixo + chave, valor, { EX: dataExpiracao })
+    await this.cliente.set(this.prefixo + chave, valor, { EXAT: dataExpiracao })
   }
 
   async buscaValor (chave: string): Promise<any> {
