@@ -14,6 +14,7 @@ npm test               # jest via node --experimental-vm-modules (ESM)
 npm test -- src/test/app.test.ts                     # um único arquivo de teste
 npm test -- -t "nome do teste"                       # um único teste pelo nome
 npx eslint src         # lint (standard-with-typescript)
+npm run seed           # popula o banco do .env com dados de exemplo (src/seed/dadosDeExemplo.ts); não precisa de Redis
 docker compose up      # MySQL (3306) + Redis (6379) + app (3000) + seed único a partir de population.sql
 ```
 
@@ -23,7 +24,7 @@ O README indica Node 16; o Dockerfile usa `node:19`.
 
 `src/utils/serverUtils.ts` lança um erro na inicialização se `DB_TYPE`, `SECRET_JWT`, `SECRET_KEY_CRYPTO`, `DB_PASSWORD` e `DB_DATABASE` não estiverem definidas. Outras variáveis usadas: `DB_HOST`, `DB_PORT`, `DB_USER`, `SERVER_PORT` (padrão 3000; o `voll-med-front` espera a API nessa porta), `SECRET_KEY`. As variáveis são lidas do `.env`, que está no gitignore e não existe no repositório (o Dockerfile faz `COPY` dele, então o build Docker falha sem ele).
 
-- `DB_TYPE=sqlite` faz o `src/data-source.ts` usar SQLite em `./src/database/database.sqlite`. Qualquer outro valor usa MySQL. Ambos usam `synchronize: true` e não têm migrations, então mudanças nas entidades alteram o schema diretamente.
+- `DB_TYPE=sqlite` faz o `src/data-source.ts` usar SQLite em `./src/database/database.sqlite` (ou em `DB_SQLITE_PATH`; a pasta é criada se não existir). Qualquer outro valor usa MySQL. Ambos usam `synchronize: true` e não têm migrations, então mudanças nas entidades alteram o schema diretamente.
 - A URL do Redis vem de `REDIS_URL` (padrão `redis://localhost:6379`), lida em `src/services/redis/redisClient.ts`. O docker-compose define `REDIS_URL=redis://redis:6379` para o serviço `app`. Os clientes Redis são criados já no import de `src/auth/tokens.ts`, antes do `dotenv.config()` do `server.ts`, por isso o `redisClient.ts` carrega o `.env` por conta própria.
 
 ## Arquitetura
