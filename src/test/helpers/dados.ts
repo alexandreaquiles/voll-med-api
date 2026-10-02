@@ -6,7 +6,7 @@ import { Consulta } from '../../consultas/consultaEntity.js'
 import { Endereco } from '../../enderecos/enderecoEntity.js'
 import { Especialista } from '../../especialistas/EspecialistaEntity.js'
 import { Paciente } from '../../pacientes/pacienteEntity.js'
-import { encryptPassword } from '../../utils/senhaUtils.js'
+import { geraHashDeSenha } from '../../utils/senhaUtils.js'
 
 // Os dados são gravados direto no banco: o cadastro de paciente pela API
 // valida o CEP em um serviço externo.
@@ -31,7 +31,7 @@ export async function criaClinica (dataSource: DataSource, nome: string): Promis
   const clinica = new Clinica()
   clinica.nome = nome
   clinica.email = `${nome.toLowerCase().replace(/\s/g, '')}@teste.com`
-  clinica.senha = encryptPassword('Senha@123')
+  clinica.senha = geraHashDeSenha('Senha@123')
   clinica.endereco = await criaEndereco(dataSource)
   return await dataSource.manager.save(Clinica, clinica)
 }
@@ -40,7 +40,7 @@ export async function criaEspecialista (
   dataSource: DataSource, nome: string, crm: string, clinica?: Clinica, especialidade = 'Clínico Geral'
 ): Promise<Especialista> {
   const especialista = new Especialista(
-    nome, crm, '', true, especialidade, `${crm}@teste.com`, '11999999999', false, null, encryptPassword('Senha@123')
+    nome, crm, '', true, especialidade, `${crm}@teste.com`, '11999999999', false, null, geraHashDeSenha('Senha@123')
   )
   especialista.endereco = await criaEndereco(dataSource)
   if (clinica !== undefined) {
@@ -51,7 +51,7 @@ export async function criaEspecialista (
 
 export async function criaPaciente (dataSource: DataSource, nome: string, cpf: string, historico: string[]): Promise<Paciente> {
   const paciente = new Paciente(
-    cpf, nome, `${cpf}@teste.com`, encryptPassword('Senha@123'), '11987654321', null, true, null, null, historico
+    cpf, nome, `${cpf}@teste.com`, geraHashDeSenha('Senha@123'), '11987654321', null, true, null, null, historico
   )
   paciente.possuiPlanoSaude = false
   paciente.endereco = await criaEndereco(dataSource)

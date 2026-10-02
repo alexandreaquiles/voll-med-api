@@ -4,7 +4,26 @@ import { access, refresh } from './tokens.js'
 
 import { AppDataSource } from '../data-source.js'
 import { AppError } from '../error/ErrorHandler.js'
-import { decryptPassword } from '../utils/senhaUtils.js'
+import { confereSenha, ehHashDeSenha, geraHashDeSenha } from '../utils/senhaUtils.js'
+import { Role } from './roles.js'
+import { Paciente } from '../pacientes/pacienteEntity.js'
+import { Especialista } from '../especialistas/EspecialistaEntity.js'
+import { Clinica } from '../clinicas/clinicaEntity.js'
+
+// Autenticaveis é uma view: a senha é atualizada na tabela de cada tipo de usuário
+const TABELA_POR_PAPEL = {
+  [Role.paciente]: Paciente,
+  [Role.especialista]: Especialista,
+  [Role.clinica]: Clinica
+}
+
+// Troca uma senha ainda no formato antigo (criptografia reversível) pelo hash
+async function migraParaHash (id: string, role: Role, senha: string): Promise<void> {
+  const tabela = TABELA_POR_PAPEL[role]
+  if (tabela !== undefined) {
+    await AppDataSource.manager.update(tabela, { id }, { senha: geraHashDeSenha(senha) })
+  }
+}
 
 export const login = async (req: Request, res: Response): Promise<Response> => {
   const { email, senha } = req.body
@@ -38,10 +57,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     throw new AppError('Não encontrado!', 404)
   } else {
     const { id, rota, role, senha: senhaAuth } = autenticavel
-    const senhaCorrespondente = decryptPassword(senhaAuth)
-
-    if (senha !== senhaCorrespondente) {
+    if (typeof senha !== 'string' || !confereSenha(senha, senhaAuth)) {
       throw new AppError('Senha incorreta!', 401)
+    }
+
+    if (!ehHashDeSenha(senhaAuth)) {
+      await migraParaHash(id, role, senha)
     }
 
     // aqui passo o role pq vai pro payload

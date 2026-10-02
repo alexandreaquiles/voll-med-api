@@ -23,7 +23,7 @@ npm install
 cp .env.example .env
 ```
 
-Os valores do banco já batem com o `docker-compose.yaml`. Troque os segredos (`SECRET_JWT`, que assina os tokens de login, e `SECRET_KEY_CRYPTO`, que criptografa as senhas) se quiser.
+Os valores do banco já batem com o `docker-compose.yaml`. Troque os segredos se quiser: `SECRET_JWT` assina os tokens de login, e `SECRET_KEY_CRYPTO` só confere senhas gravadas no formato antigo, de antes de as senhas virarem hash.
 
 ### 3. Suba o MySQL e o Redis
 

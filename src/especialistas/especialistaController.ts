@@ -6,7 +6,7 @@ import { Endereco } from '../enderecos/enderecoEntity.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
 import { Role } from '../auth/roles.js'
 import { Clinica } from '../clinicas/clinicaEntity.js'
-import { encryptPassword } from '../utils/senhaUtils.js'
+import { geraHashDeSenha } from '../utils/senhaUtils.js'
 
 // Get All: só os especialistas da clínica autenticada
 export const especialistas = async (
@@ -30,7 +30,7 @@ export const criarEspecialista = async (
     // transforma array de numbers em array de strings com os nomes dos planos definidos no enum correspondente
     planosSaude = mapeiaPlano(planosSaude)
   }
-  const senhaCriptografada = encryptPassword(senha)
+  const hashDaSenha = geraHashDeSenha(senha)
   const especialista = new Especialista(
     nome,
     crm,
@@ -38,7 +38,7 @@ export const criarEspecialista = async (
     estaAtivo,
     especialidade,
     email,
-    telefone, possuiPlanoSaude, planosSaude, senhaCriptografada
+    telefone, possuiPlanoSaude, planosSaude, hashDaSenha
   )
 
   const enderecoPaciente = new Endereco()

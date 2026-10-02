@@ -8,7 +8,7 @@ import { CPFValido } from './validacaoCPF.js'
 import { mapeiaPlano } from '../utils/planoSaudeUtils.js'
 import { Consulta } from '../consultas/consultaEntity.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
-import { encryptPassword } from '../utils/senhaUtils.js'
+import { geraHashDeSenha } from '../utils/senhaUtils.js'
 import { pacienteSchema } from './pacienteYupSchema.js';
 import { sanitizacaoPaciente } from './pacienteSanitizations.js'
 import { filtroDeConsultasVisiveis, resumoDoPaciente } from '../consultas/consultaAcesso.js'
@@ -89,12 +89,12 @@ export const criarPaciente = async (
       planosSaude = mapeiaPlano(planosSaude)
     }
 
-    const senhaCriptografada = encryptPassword(senha)
+    const hashDaSenha = geraHashDeSenha(senha)
     const paciente = new Paciente(
       cpf,
       nome,
       email,
-      senhaCriptografada,
+      hashDaSenha,
       telefone,
       planosSaude,
       true,

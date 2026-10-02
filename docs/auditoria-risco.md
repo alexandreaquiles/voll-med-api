@@ -76,6 +76,8 @@ Os tokens de login também passaram a ser assinados e verificados com a mesma va
 
 Além das rotas citadas acima, a correção do BOLA cobriu casos do mesmo tipo encontrados durante o trabalho: `PATCH /especialista/:id` (sem token nenhum), `DELETE /especialista/:id`, as rotas de imagem do paciente e `PUT/DELETE/POST /clinica/:id`.
 
+As senhas passaram a ser gravadas como hash scrypt, com sal aleatório por senha e comparação em tempo constante (`src/utils/senhaUtils.ts`, testes em `src/test/senhas.test.ts`). As senhas já gravadas no formato antigo, de criptografia reversível, continuam aceitas: no primeiro login certo, a API as troca pelo hash.
+
 ### Pendências
 
-- **Senhas com criptografia reversível:** continuam em `src/utils/senhaUtils.ts`. Trocar por hash (bcrypt ou argon2) exige migrar as senhas já gravadas.
+- **Fim da migração das senhas:** depois que todos os usuários tiverem feito login (ou num script que converta o resto), dá para remover a `SECRET_KEY_CRYPTO` e o código que confere o formato antigo.

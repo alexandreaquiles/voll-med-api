@@ -5,7 +5,7 @@ import { Consulta } from '../consultas/consultaEntity.js'
 import { Endereco } from '../enderecos/enderecoEntity.js'
 import { Especialista } from '../especialistas/EspecialistaEntity.js'
 import { Paciente } from '../pacientes/pacienteEntity.js'
-import { encryptPassword } from '../utils/senhaUtils.js'
+import { geraHashDeSenha } from '../utils/senhaUtils.js'
 
 export const SENHA_DE_EXEMPLO = 'Senha@123'
 export const EMAIL_DO_GESTOR = 'gestor@voll.com'
@@ -67,7 +67,7 @@ async function criaClinica (dataSource: DataSource, nome: string, email: string)
   const clinica = new Clinica()
   clinica.nome = nome
   clinica.email = email
-  clinica.senha = encryptPassword(SENHA_DE_EXEMPLO)
+  clinica.senha = geraHashDeSenha(SENHA_DE_EXEMPLO)
   clinica.endereco = await criaEndereco(dataSource)
   return await dataSource.manager.save(Clinica, clinica)
 }
@@ -76,7 +76,7 @@ async function criaEspecialista (
   dataSource: DataSource, clinica: Clinica, nome: string, crm: string, especialidade: string
 ): Promise<Especialista> {
   const especialista = new Especialista(
-    nome, crm, '', true, especialidade, emailDe(nome), '11999990000', false, null, encryptPassword(SENHA_DE_EXEMPLO)
+    nome, crm, '', true, especialidade, emailDe(nome), '11999990000', false, null, geraHashDeSenha(SENHA_DE_EXEMPLO)
   )
   especialista.clinica = clinica
   especialista.endereco = await criaEndereco(dataSource)
@@ -85,7 +85,7 @@ async function criaEspecialista (
 
 async function criaPaciente (dataSource: DataSource, nome: string, historico: string[]): Promise<Paciente> {
   const paciente = new Paciente(
-    cpf.generate(), nome, emailDe(nome), encryptPassword(SENHA_DE_EXEMPLO), '11987650000', null, true, null, null, historico
+    cpf.generate(), nome, emailDe(nome), geraHashDeSenha(SENHA_DE_EXEMPLO), '11987650000', null, true, null, null, historico
   )
   paciente.possuiPlanoSaude = false
   paciente.endereco = await criaEndereco(dataSource)
