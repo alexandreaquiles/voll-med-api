@@ -28,7 +28,7 @@ const AppDataSourceMysql = new DataSource({
 
 const AppDataSourceSqlite = new DataSource({
   type: 'sqlite',
-  database: './src/database/database.sqlite', // caminho para o arquivo do banco de dados SQLite
+  database: process.env.DB_SQLITE_PATH ?? './src/database/database.sqlite', // caminho para o arquivo do banco de dados SQLite (":memory:" nos testes)
   synchronize: true,
   logging: false,
   entities: [Paciente, Endereco, Especialista, Avaliacoes, Clinica, Consulta, Autenticaveis, Imagem],

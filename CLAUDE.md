@@ -11,7 +11,7 @@ npm install
 npm start              # tsc-watch: compila src/ -> build/ e executa node ./build/server.js a cada build bem-sucedido
 npm run compile        # build único com tsc
 npm test               # jest via node --experimental-vm-modules (ESM)
-npm test -- src/test/routes/pacienteRoutes.test.ts   # um único arquivo de teste
+npm test -- src/test/app.test.ts                     # um único arquivo de teste
 npm test -- -t "nome do teste"                       # um único teste pelo nome
 npx eslint src         # lint (standard-with-typescript)
 docker compose up      # MySQL (3306) + Redis (6379) + app (3000) + seed único a partir de population.sql
@@ -43,7 +43,12 @@ O README indica Node 16; o Dockerfile usa `node:19`.
 
 ## Testes
 
-O único teste é `src/test/routes/pacienteRoutes.test.ts`. Ele importa o `server.ts`, que sobe a aplicação inteira, então precisa das variáveis de ambiente, de um banco de dados e do Redis.
+Testes de integração em `src/test/*.test.ts`, com supertest contra o `app` exportado por `src/app.ts` (o `src/server.ts` só inicializa o banco e chama `listen`). Não precisam de banco nem de Redis externos:
+
+- `src/test/ambiente.ts` (`setupFiles` do Jest) define as variáveis de ambiente, com SQLite em memória (`DB_SQLITE_PATH=:memory:`) e o mesmo valor em `SECRET_KEY` e `SECRET_JWT`.
+- `iniciaApp()` (`src/test/helpers/app.ts`) troca o `ClienteRedis` por `RedisEmMemoria` via `jest.unstable_mockModule` e só então importa a aplicação dinamicamente. Por isso os testes importam `app` por ele, nunca diretamente.
+- `src/test/helpers/dados.ts` grava clínicas, especialistas, pacientes e consultas direto no banco (o cadastro de paciente pela API valida o CEP em um serviço externo) e gera tokens com `tokenDe()`.
+- O Jest roda em modo ESM (`ts-jest/presets/default-esm`). O `moduleNameMapper` remove a extensão `.js` dos imports relativos. Use `jest` e os demais globais importando de `@jest/globals`.
 
 ## Ferramentas de segurança
 
