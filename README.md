@@ -5,11 +5,11 @@ API REST do sistema de clínicas Voll.Med (Express + TypeORM). O dashboard admin
 ## Pré-requisitos
 
 - Node.js (testado com a versão 22)
-- Docker, para rodar o Redis
+- Docker, para rodar o MySQL e o Redis
 
 ## Rodando localmente
 
-O jeito mais simples é usar SQLite como banco e rodar só o Redis no Docker.
+O MySQL e o Redis rodam no Docker Compose. A API roda na sua máquina, com recarga automática.
 
 ### 1. Instale as dependências
 
@@ -19,27 +19,19 @@ npm install
 
 ### 2. Crie o arquivo `.env`
 
-Na raiz do projeto:
-
-```
-DB_TYPE=sqlite
-DB_PASSWORD=x
-DB_DATABASE=x
-SECRET_JWT=segredo-local
-SECRET_KEY=segredo-local
-SECRET_KEY_CRYPTO=chave-local
+```bash
+cp .env.example .env
 ```
 
-- `SECRET_JWT` e `SECRET_KEY` precisam ter **o mesmo valor**: os tokens são assinados com uma e verificados com a outra.
-- `DB_PASSWORD` e `DB_DATABASE` não são usados com SQLite, mas a API não sobe sem eles.
-- O banco fica em `src/database/database.sqlite`. Para usar outro arquivo, defina `DB_SQLITE_PATH`.
-- O Redis é procurado em `redis://localhost:6379`. Para usar outro endereço, defina `REDIS_URL`.
+Os valores do banco já batem com o `docker-compose.yaml`. Troque os segredos se quiser, mas `SECRET_JWT` e `SECRET_KEY` precisam ter **o mesmo valor**: os tokens são assinados com uma e verificados com a outra.
 
-### 3. Suba o Redis
+### 3. Suba o MySQL e o Redis
 
 ```bash
-docker run -d --rm --name redis-vollmed -p 6379:6379 redis:7
+docker compose up -d --wait
 ```
+
+O `--wait` espera os dois serviços ficarem prontos. Os dados do MySQL ficam num volume do Docker e sobrevivem a reinícios.
 
 ### 4. Popule o banco com dados de exemplo
 
@@ -54,7 +46,7 @@ São criadas duas clínicas, especialistas, pacientes e consultas no mês anteri
 | Gestor da Clínica Voll | `gestor@voll.com` |
 | Gestor da Clínica Vizinha | `vizinha@voll.com` |
 
-Se rodar de novo, o seed não duplica os dados. Para recriá-los, apague `src/database/database.sqlite` e rode outra vez.
+Se rodar de novo, o seed não duplica os dados. Para recriá-los, apague o banco com `docker compose down -v`, suba de novo (passo 3) e rode o seed outra vez.
 
 ### 5. Suba a API
 
@@ -77,7 +69,11 @@ O front fica em http://localhost:3001 e repassa as chamadas para a API em `local
 
 ### Para desligar
 
-`Ctrl+C` nos terminais da API e do front, e `docker stop redis-vollmed`.
+`Ctrl+C` nos terminais da API e do front, e `docker compose down` para parar o MySQL e o Redis. Com `docker compose down -v`, os dados do banco também são apagados.
+
+## Sem Docker: SQLite
+
+Para rodar sem o MySQL, use `DB_TYPE=sqlite` no `.env` (o banco fica em `src/database/database.sqlite`, ou em `DB_SQLITE_PATH`). O Redis continua necessário para o login; ele é procurado em `REDIS_URL`.
 
 ## Testes
 
@@ -103,7 +99,8 @@ Exemplos de requisições estão em `src/docs/http_requests.json`.
 ## Problemas comuns
 
 - **O dashboard abre direto ou mostra dados estranhos:** sobrou um token antigo no navegador. Clique em "Sair" ou limpe o `localStorage` de `localhost:3001`.
-- **Erros de conexão com o Redis no log da API:** confira se o container está rodando com `docker ps`.
+- **Erros de conexão com o MySQL ou o Redis no log da API:** confira se os serviços estão rodando com `docker compose ps`.
+- **A porta 3306 ou 6379 já está em uso:** pare o MySQL ou o Redis instalado na sua máquina, ou troque a porta no `docker-compose.yaml` e no `.env`.
 - **A API não sobe e reclama de variáveis de ambiente:** confira o `.env` do passo 2.
 
 ## Segurança
