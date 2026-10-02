@@ -6,6 +6,8 @@ import { Especialista } from './especialistas/EspecialistaEntity.js'
 import { Avaliacoes } from './avaliacoes/avaliacoesEntity.js'
 import { Imagem } from './imagem/imagemEntity.js'
 import * as dotenv from 'dotenv'
+import { mkdirSync } from 'fs'
+import { dirname } from 'path'
 import { Clinica } from './clinicas/clinicaEntity.js'
 import { Consulta } from './consultas/consultaEntity.js'
 import { Autenticaveis } from './auth/authEntity.js'
@@ -26,9 +28,15 @@ const AppDataSourceMysql = new DataSource({
   subscribers: []
 })
 
+const caminhoDoSqlite = process.env.DB_SQLITE_PATH ?? './src/database/database.sqlite'
+if (process.env.DB_TYPE === 'sqlite' && caminhoDoSqlite !== ':memory:') {
+  // O SQLite cria o arquivo do banco, mas não a pasta
+  mkdirSync(dirname(caminhoDoSqlite), { recursive: true })
+}
+
 const AppDataSourceSqlite = new DataSource({
   type: 'sqlite',
-  database: process.env.DB_SQLITE_PATH ?? './src/database/database.sqlite', // caminho para o arquivo do banco de dados SQLite (":memory:" nos testes)
+  database: caminhoDoSqlite, // caminho para o arquivo do banco de dados SQLite (":memory:" nos testes)
   synchronize: true,
   logging: false,
   entities: [Paciente, Endereco, Especialista, Avaliacoes, Clinica, Consulta, Autenticaveis, Imagem],
