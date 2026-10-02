@@ -82,6 +82,7 @@ export const criarPaciente = async (
     })
     if (existePacienteComCPF != null) {
       res.status(409).json({ message: 'Já existe um paciente com esse CPF!' })
+      return
     }
 
     if (possuiPlanoSaude === true && planosSaude !== undefined) {
