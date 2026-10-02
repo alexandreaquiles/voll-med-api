@@ -51,6 +51,15 @@ export default class ClienteRedis {
     return resultado === 1
   }
 
+  // Soma 1 ao contador da chave; a contagem expira depois do tempo dado, a partir do primeiro incremento
+  async incrementa (chave: string, segundosParaExpirar: number): Promise<number> {
+    const valor = await this.cliente.incr(this.prefixo + chave)
+    if (valor === 1) {
+      await this.cliente.expire(this.prefixo + chave, segundosParaExpirar)
+    }
+    return valor
+  }
+
   async deleta (chave: string): Promise<void> {
     await this.cliente.del(this.prefixo + chave)
   }

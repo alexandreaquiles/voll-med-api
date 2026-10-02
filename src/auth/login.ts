@@ -2,6 +2,7 @@ import { request, type Request, type Response } from 'express'
 import crypto from 'crypto'
 import { Autenticaveis } from './authEntity.js'
 import { access, refresh } from './tokens.js'
+import { registraTentativaErrada, verificaTentativasDeLogin, zeraTentativas } from './tentativasDeLogin.js'
 
 import { AppDataSource } from '../data-source.js'
 import { AppError } from '../error/ErrorHandler.js'
@@ -52,6 +53,8 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     })
   }
 
+  await verificaTentativasDeLogin(email)
+
   const autenticavel = await AppDataSource.manager.findOne(Autenticaveis, {
     select: ['id', 'rota', 'role', 'senha'],
     where: { email }
@@ -61,8 +64,10 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   // contra um hash: diferenças na resposta ou no tempo revelariam quais emails têm cadastro
   const senhaConfere = typeof senha === 'string' && confereSenha(senha, autenticavel?.senha ?? HASH_DE_REFERENCIA)
   if (autenticavel == null || !senhaConfere) {
+    await registraTentativaErrada(email)
     throw new AppError('Email ou senha inválidos', 401)
   } else {
+    await zeraTentativas(email)
     const { id, rota, role, senha: senhaAuth } = autenticavel
 
     if (!ehHashDeSenha(senhaAuth)) {

@@ -16,6 +16,13 @@ export default class RedisEmMemoria {
     return this.chaves.has(this.prefixo + chave)
   }
 
+  // A expiração não é simulada
+  async incrementa (chave: string): Promise<number> {
+    const valor = Number(this.chaves.get(this.prefixo + chave) ?? 0) + 1
+    this.chaves.set(this.prefixo + chave, String(valor))
+    return valor
+  }
+
   async deleta (chave: string): Promise<void> {
     this.chaves.delete(this.prefixo + chave)
   }

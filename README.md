@@ -101,6 +101,7 @@ Exemplos de requisições estão em `src/docs/http_requests.json`.
 - **O dashboard abre direto ou mostra dados estranhos:** sobrou um token antigo no navegador. Clique em "Sair" ou limpe o `localStorage` de `localhost:3001`.
 - **Erros de conexão com o MySQL ou o Redis no log da API:** confira se os serviços estão rodando com `docker compose ps`.
 - **A porta 3306 ou 6379 já está em uso:** pare o MySQL ou o Redis instalado na sua máquina, ou troque a porta no `docker-compose.yaml` e no `.env`.
+- **O login responde "Muitas tentativas de login":** depois de 5 senhas erradas para o mesmo email, o login fica bloqueado por 15 minutos. Para liberar antes, rode `docker compose exec redis redis-cli --scan --pattern 'tentativas-de-login*'` e apague a chave com `redis-cli del`.
 - **A API não sobe e reclama de variáveis de ambiente:** confira o `.env` do passo 2.
 
 ## Segurança

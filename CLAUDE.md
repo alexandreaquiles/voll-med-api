@@ -35,6 +35,7 @@ Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O p
 - **Autenticação** (`src/auth/`):
   - `Autenticaveis` é uma **ViewEntity** do TypeORM: um `UNION ALL` das tabelas `paciente`, `especialista` e `clinica`, com um dialeto SQL diferente para SQLite e MySQL. O login busca o email ali e retorna uma `rota` de acordo com o tipo de usuário.
   - Access tokens são JWTs (20 min) revogados por meio de uma blocklist no Redis. Refresh tokens são tokens opacos aleatórios (5 dias) mantidos em uma allowlist no Redis (`tokens.ts`).
+  - Após 5 logins errados para o mesmo email, o login responde 429 por 15 minutos (`tentativasDeLogin.ts`, contador no Redis via `ClienteRedis.incrementa`).
   - As rotas são protegidas com `verificaTokenJWT(Role.x, ...)` (`middlewares/authMiddlewares.ts`), que define `req.userId` e `req.userRole` (tipados em `src/@types/express.d.ts`).
 - **Autorização por recurso** (ver `docs/auditoria-risco.md` e os testes `src/test/bola.test.ts`, `dadosSensiveis.test.ts` e `massAssignment.test.ts`):
   - Rotas `/:id` de paciente, especialista e clínica usam `verificaTokenJWT(...)` seguido de `verificaProprioUsuario`, que exige `req.params.id === req.userId`. Quando a clínica também pode agir sobre o especialista (PUT/DELETE `/especialista/:id`), a checagem fica no controller.

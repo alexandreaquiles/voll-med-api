@@ -80,6 +80,8 @@ As senhas passaram a ser gravadas como hash scrypt, com sal aleatório por senha
 
 O login também deixou de revelar quais emails têm cadastro: email inexistente e senha errada recebem a mesma resposta (401, "Email ou senha inválidos"), e nos dois casos a senha é conferida contra um hash, para que o tempo de resposta não denuncie a diferença (`src/test/autenticacao.test.ts`).
 
+Depois de 5 tentativas erradas para o mesmo email, o login fica bloqueado por 15 minutos e responde 429, para dificultar quem tenta adivinhar senhas. A contagem fica no Redis e é zerada por um login certo (`src/auth/tentativasDeLogin.ts`, testes em `src/test/tentativasDeLogin.test.ts`).
+
 ### Pendências
 
 - **Fim da migração das senhas:** depois que todos os usuários tiverem feito login (ou num script que converta o resto), dá para remover a `SECRET_KEY_CRYPTO` e o código que confere o formato antigo.
