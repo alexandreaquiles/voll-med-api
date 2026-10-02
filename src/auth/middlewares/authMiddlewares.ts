@@ -39,6 +39,14 @@ function verificaTokenJWT (...role: Role[]) {
   }
 }
 
+// Deve vir depois de verificaTokenJWT: só deixa passar se o :id da URL for o do próprio usuário
+function verificaProprioUsuario (req, _, next): void {
+  if (req.params.id !== req.userId) {
+    throw new AppError('Não autorizado', Status.FORBIDDEN)
+  }
+  next()
+}
+
 async function refreshMiddleware () {
   return async (req, _, next): Promise<void> => {
     const { refreshToken } = req.body
@@ -49,4 +57,4 @@ async function refreshMiddleware () {
   }
 }
 
-export { verificaTokenJWT, refreshMiddleware }
+export { verificaTokenJWT, verificaProprioUsuario, refreshMiddleware }

@@ -103,9 +103,14 @@ export const atualizaEspecialistaPeloIdDaClinica = async (req: Request, res: Res
 
   // buscando especialista do id especificado
   const especialista = await AppDataSource.manager.findOne(Especialista, {
-    where: { id: especialistaId }
+    where: { id: especialistaId },
+    relations: { clinica: true }
   })
   if (especialista == null) { return res.status(404).json({ message: 'Especialista não encontrado' }) }
+  // Um especialista já vinculado a outra clínica não pode ser tomado por esta
+  if (especialista.clinica != null && especialista.clinica.id !== id) {
+    return res.status(403).json({ message: 'Especialista vinculado a outra clínica' })
+  }
 
   // buscando clinica do id especificado
   const clinica = await AppDataSource.manager.findOne(Clinica, {

@@ -11,6 +11,21 @@ import {
 } from './consultaValidacoes.js'
 import { mapeiaLembretes } from '../utils/consultaUtils.js'
 import { AppError, Status } from '../error/ErrorHandler.js'
+import { Role } from '../auth/roles.js'
+
+// Só o paciente, o especialista e a clínica do especialista podem acessar a consulta
+function participaDaConsulta (consulta: Consulta, userId?: string, role?: string): boolean {
+  switch (role) {
+    case Role.paciente:
+      return consulta.paciente?.id === userId
+    case Role.especialista:
+      return consulta.especialista?.id === userId
+    case Role.clinica:
+      return consulta.especialista?.clinica?.id === userId
+    default:
+      return false
+  }
+}
 
 export const criaConsulta = async (
   req: Request,
@@ -73,13 +88,18 @@ export const listaConsultas = async (
 export const buscaConsultaPorId = async (req: Request, res: Response
 ): Promise<void> => {
   const { id } = req.params
-  const consulta = await AppDataSource.manager.findOne(Consulta, { where: { id }, relations: ['paciente', 'especialista'] })
+  const consulta = await AppDataSource.manager.findOne(Consulta, {
+    where: { id },
+    relations: { paciente: true, especialista: { clinica: true } }
+  })
 
-  if (consulta !== null) {
-    res.json(consulta)
-  } else {
+  if (consulta === null) {
     throw new AppError('Consulta não encontrada', Status.BAD_REQUEST)
   }
+  if (!participaDaConsulta(consulta, req.userId, req.userRole)) {
+    throw new AppError('Não autorizado', Status.FORBIDDEN)
+  }
+  res.json(consulta)
 }
 
 export const deletaConsulta = async (
@@ -89,11 +109,15 @@ export const deletaConsulta = async (
   const { id } = req.params
   const { motivoCancelamento } = req.body
   const consulta = await AppDataSource.manager.findOne(Consulta, {
-    where: { id }
+    where: { id },
+    relations: { paciente: true, especialista: { clinica: true } }
   })
 
   if (consulta == null) {
     throw new AppError('Consulta não encontrada')
+  }
+  if (!participaDaConsulta(consulta, req.userId, req.userRole)) {
+    throw new AppError('Não autorizado', Status.FORBIDDEN)
   }
 
   const HORA = 60 * 24

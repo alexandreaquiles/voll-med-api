@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { verificaTokenJWT } from '../auth/middlewares/authMiddlewares.js'
+import { verificaProprioUsuario, verificaTokenJWT } from '../auth/middlewares/authMiddlewares.js'
 
 import multer from 'multer'
 import { Role } from '../auth/roles.js'
@@ -23,35 +23,40 @@ export const pacienteRouter = Router()
 pacienteRouter.get('/', exibeTodosPacientes)
 pacienteRouter.get('/consulta-por-paciente', consultaPorPaciente)
 pacienteRouter.post('/', criarPaciente)
-pacienteRouter.get('/:id', lerPaciente)
-pacienteRouter.get('/:id/consultas', listaConsultasPaciente)
-pacienteRouter.put('/:id', verificaTokenJWT(Role.paciente), atualizarPaciente)
+// Rotas com :id só podem ser usadas pelo próprio paciente
+const apenasOProprioPaciente = [verificaTokenJWT(Role.paciente), verificaProprioUsuario]
+
+pacienteRouter.get('/:id', apenasOProprioPaciente, lerPaciente)
+pacienteRouter.get('/:id/consultas', apenasOProprioPaciente, listaConsultasPaciente)
+pacienteRouter.put('/:id', apenasOProprioPaciente, atualizarPaciente)
 pacienteRouter.delete(
   '/:id',
-  verificaTokenJWT(Role.paciente),
+  apenasOProprioPaciente,
   desativaPaciente
 )
 pacienteRouter.patch(
   '/:id',
-  verificaTokenJWT(Role.paciente),
+  apenasOProprioPaciente,
   atualizarEnderecoPaciente
 )
 
 pacienteRouter.post(
   '/:id/images',
+  apenasOProprioPaciente,
   upload.single('file'),
   criaImagem
 )
 
 pacienteRouter.get(
   '/:id/images',
+  apenasOProprioPaciente,
   upload.single('file'),
   listaImagemPaciente
 )
 
 pacienteRouter.delete(
   '/:id/images',
-  verificaTokenJWT(Role.paciente),
+  apenasOProprioPaciente,
   destroiImagem
 )
 

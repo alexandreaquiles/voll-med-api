@@ -3,7 +3,8 @@ import { AppDataSource } from '../data-source.js'
 import { Especialista } from './EspecialistaEntity.js'
 import { mapeiaPlano } from '../utils/planoSaudeUtils.js'
 import { Endereco } from '../enderecos/enderecoEntity.js'
-import { AppError } from '../error/ErrorHandler.js'
+import { AppError, Status } from '../error/ErrorHandler.js'
+import { Role } from '../auth/roles.js'
 import { encryptPassword } from '../utils/senhaUtils.js'
 
 // Get All
@@ -118,10 +119,18 @@ export const apagarEspecialista = async (
   res: Response
 ): Promise<void> => {
   const { id } = req.params
-  const especialistaDel = await AppDataSource.manager.findOneBy(Especialista, {
-    id
+  const especialistaDel = await AppDataSource.manager.findOne(Especialista, {
+    where: { id },
+    relations: { clinica: true }
   })
   if (especialistaDel !== null) {
+    // Só o próprio especialista ou a clínica dele podem apagá-lo
+    const ehOProprio = req.userRole === Role.especialista && especialistaDel.id === req.userId
+    const ehASuaClinica = req.userRole === Role.clinica && especialistaDel.clinica?.id === req.userId
+    if (!ehOProprio && !ehASuaClinica) {
+      throw new AppError('Não autorizado', Status.FORBIDDEN)
+    }
+
     await AppDataSource.manager.remove(Especialista, especialistaDel)
     res.json({ message: 'Especialista apagado!' })
   } else {

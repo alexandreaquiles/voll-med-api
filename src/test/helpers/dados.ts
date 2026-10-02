@@ -1,5 +1,5 @@
+import jwt from 'jsonwebtoken'
 import type { DataSource } from 'typeorm'
-import { access } from '../../auth/tokens.js'
 import { Role } from '../../auth/roles.js'
 import { Clinica } from '../../clinicas/clinicaEntity.js'
 import { Consulta } from '../../consultas/consultaEntity.js'
@@ -11,8 +11,10 @@ import { encryptPassword } from '../../utils/senhaUtils.js'
 // Os dados são gravados direto no banco: o cadastro de paciente pela API
 // valida o CEP em um serviço externo.
 
+// Mesmo formato de access.cria (src/auth/tokens.ts). Não importa tokens.ts aqui porque
+// esse import carregaria o ClienteRedis real antes de iniciaApp() registrar o mock.
 export function tokenDe (entidade: { id: string, role: Role }): string {
-  return access.cria(entidade.id, entidade.role)
+  return jwt.sign({ id: entidade.id, role: entidade.role }, process.env.SECRET_KEY as string, { expiresIn: '20m' })
 }
 
 async function criaEndereco (dataSource: DataSource): Promise<Endereco> {
