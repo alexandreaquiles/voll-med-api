@@ -18,7 +18,7 @@ npm run seed           # popula o banco do .env com dados de exemplo (src/seed/d
 docker compose up -d --wait   # só a infraestrutura: MySQL (3306) e Redis (6379); a API roda fora do Docker
 ```
 
-Testado com Node 22; o `Dockerfile` (não usado pelo compose) usa `node:19`. O passo a passo completo está no README.
+Testado com Node 22. O passo a passo completo está no README.
 
 ## Ambiente obrigatório
 
