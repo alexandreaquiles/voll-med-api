@@ -22,6 +22,8 @@ const TABELA_POR_PAPEL = {
 // Hash de uma senha aleatória, conferido quando o email não existe
 const HASH_DE_REFERENCIA = geraHashDeSenha(crypto.randomBytes(16).toString('hex'))
 
+const estaAtivo = (autenticavel: Autenticaveis): boolean => Boolean(Number(autenticavel.estaAtivo))
+
 // Troca uma senha ainda no formato antigo (criptografia reversível) pelo hash
 async function migraParaHash (id: string, role: Role, senha: string): Promise<void> {
   const tabela = TABELA_POR_PAPEL[role]
@@ -35,12 +37,12 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
 
   if (req.userId) {
     const autenticavel = await AppDataSource.manager.findOne(Autenticaveis, {
-      select: ['id', 'role', 'rota'],
+      select: ['id', 'role', 'rota', 'estaAtivo'],
       where: { id: req.userId }
     })
 
-    if (autenticavel == null) {
-      throw new AppError('Não encontrado!', 404)
+    if (autenticavel == null || !estaAtivo(autenticavel)) {
+      throw new AppError('Sessão inválida. Faça login novamente', 401)
     }
 
     const newAccessToken = access.cria(req.userId, autenticavel.role)
@@ -56,14 +58,15 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
   await verificaTentativasDeLogin(email)
 
   const autenticavel = await AppDataSource.manager.findOne(Autenticaveis, {
-    select: ['id', 'rota', 'role', 'senha'],
+    select: ['id', 'rota', 'role', 'senha', 'estaAtivo'],
     where: { email }
   })
 
   // Email inexistente e senha errada têm a mesma resposta, e nos dois casos a senha é conferida
   // contra um hash: diferenças na resposta ou no tempo revelariam quais emails têm cadastro
   const senhaConfere = typeof senha === 'string' && confereSenha(senha, autenticavel?.senha ?? HASH_DE_REFERENCIA)
-  if (autenticavel == null || !senhaConfere) {
+  // Usuários desativados recebem a mesma resposta, para não revelar a situação da conta
+  if (autenticavel == null || !senhaConfere || !estaAtivo(autenticavel)) {
     await registraTentativaErrada(email)
     throw new AppError('Email ou senha inválidos', 401)
   } else {

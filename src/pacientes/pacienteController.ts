@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { Paciente } from './pacienteEntity.js'
 import { IsNull } from 'typeorm'
 import { AppDataSource } from '../data-source.js'
+import { access } from '../auth/tokens.js'
 import { Endereco } from '../enderecos/enderecoEntity.js'
 import { CPFValido } from './validacaoCPF.js'
 import { mapeiaPlano } from '../utils/planoSaudeUtils.js'
@@ -288,10 +289,13 @@ export const desativaPaciente = async (
     res.status(404).json('Paciente não encontrado!')
   } else {
     paciente.estaAtivo = false
-    // await AppDataSource.manager.save(Paciente, paciente)
+    await AppDataSource.manager.save(Paciente, paciente)
 
-    //! Caso deseje deletar o paciente, basta descomentar a linha abaixo
-    await AppDataSource.manager.delete(Paciente, { id: paciente.id })
+    // Encerra a sessão usada para desativar; o login passa a recusar o paciente
+    const token = req.headers.authorization?.replace('Bearer ', '')
+    if (token !== undefined) {
+      await access.invalida(token)
+    }
     res.json({
       message: 'Paciente desativado!'
     })
