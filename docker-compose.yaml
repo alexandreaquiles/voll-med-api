@@ -22,6 +22,7 @@ services:
       - redis
     environment:
       - DB_HOST=db
+      - REDIS_URL=redis://redis:6379
     # irá montar a pasta atual para dentro do container em "/app".
     volumes:
       - .:/app

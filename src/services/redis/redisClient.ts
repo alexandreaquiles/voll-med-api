@@ -1,12 +1,17 @@
 import { type RedisClientType, createClient } from 'redis'
 import jwt from 'jsonwebtoken'
+import * as dotenv from 'dotenv'
+
+// Os clientes são criados no import de tokens.ts, antes do dotenv.config() do server.ts
+dotenv.config({ path: '.env' })
+
 export default class ClienteRedis {
   private readonly cliente: RedisClientType
   private readonly prefixo: string
 
   constructor (prefixo: string) {
     this.cliente = createClient({
-      url: 'redis://redis:6379'
+      url: process.env.REDIS_URL ?? 'redis://localhost:6379'
     })
 
     this.prefixo = prefixo
