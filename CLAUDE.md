@@ -21,7 +21,7 @@ O README indica Node 16; o Dockerfile usa `node:19`.
 
 ## Ambiente obrigatório
 
-`src/utils/serverUtils.ts` lança um erro na inicialização se `DB_TYPE`, `SECRET_JWT`, `SECRET_KEY_CRYPTO`, `DB_PASSWORD` e `DB_DATABASE` não estiverem definidas. Outras variáveis usadas: `DB_HOST`, `DB_PORT`, `DB_USER`, `SERVER_PORT`, `SECRET_KEY`. As variáveis são lidas do `.env`, que está no gitignore e não existe no repositório (o Dockerfile faz `COPY` dele, então o build Docker falha sem ele).
+`src/utils/serverUtils.ts` lança um erro na inicialização se `DB_TYPE`, `SECRET_JWT`, `SECRET_KEY_CRYPTO`, `DB_PASSWORD` e `DB_DATABASE` não estiverem definidas. Outras variáveis usadas: `DB_HOST`, `DB_PORT`, `DB_USER`, `SERVER_PORT` (padrão 3000; o `voll-med-front` espera a API nessa porta), `SECRET_KEY`. As variáveis são lidas do `.env`, que está no gitignore e não existe no repositório (o Dockerfile faz `COPY` dele, então o build Docker falha sem ele).
 
 - `DB_TYPE=sqlite` faz o `src/data-source.ts` usar SQLite em `./src/database/database.sqlite`. Qualquer outro valor usa MySQL. Ambos usam `synchronize: true` e não têm migrations, então mudanças nas entidades alteram o schema diretamente.
 - A URL do Redis está fixa como `redis://redis:6379` em `src/services/redis/redisClient.ts`, então só resolve dentro do docker-compose.
