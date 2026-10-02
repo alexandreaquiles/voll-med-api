@@ -83,7 +83,7 @@ npm test -- src/test/insights.test.ts      # um arquivo
 npm test -- -t "nome do teste"             # um teste pelo nome
 ```
 
-Os testes usam SQLite em memória e um Redis simulado: não precisam do `.env`, do Docker nem da API rodando.
+Os testes usam SQLite em memória e um Redis simulado: não precisam do `.env`, do Docker nem da API rodando. Eles também rodam no GitHub Actions a cada push e pull request na `main` (`.github/workflows/testes.yaml`).
 
 ## Marcando consultas pela API
 

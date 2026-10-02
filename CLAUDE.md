@@ -59,4 +59,4 @@ Testes de integração em `src/test/*.test.ts`, com supertest contra o `app` exp
 
 ## Ferramentas de segurança
 
-Este é um projeto de curso de desenvolvimento seguro. A CI em PRs para a `main` executa SonarQube e TruffleHog (`.github/workflows/`). Um hook de pre-commit (`.pre-commit-config.yaml`) executa o TruffleHog via Docker, e `trufflehog-exclude-path.txt` lista os caminhos que ele ignora.
+Este é um projeto de curso de desenvolvimento seguro. No GitHub Actions, `testes.yaml` roda `npm test` e `tsc` a cada push e PR na `main`; em PRs para a `main` também rodam SonarQube e TruffleHog (`.github/workflows/`). Um hook de pre-commit (`.pre-commit-config.yaml`) executa o TruffleHog via Docker, e `trufflehog-exclude-path.txt` lista os caminhos que ele ignora.
