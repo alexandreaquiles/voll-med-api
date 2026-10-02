@@ -13,7 +13,8 @@ import { verificaProprioUsuario, verificaTokenJWT } from '../auth/middlewares/au
 
 export const especialistaRouter = Router()
 
-especialistaRouter.get('/', especialistas)
+// A busca pública de especialistas é a /busca
+especialistaRouter.get('/', verificaTokenJWT(Role.clinica), especialistas)
 especialistaRouter.post('/', verificaTokenJWT(Role.clinica), criarEspecialista)
 especialistaRouter.get('/busca', buscarEspecialistas)
 especialistaRouter.get('/:id', especialistaById)

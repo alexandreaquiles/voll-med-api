@@ -8,12 +8,14 @@ import { Role } from '../auth/roles.js'
 import { Clinica } from '../clinicas/clinicaEntity.js'
 import { encryptPassword } from '../utils/senhaUtils.js'
 
-// Get All
+// Get All: só os especialistas da clínica autenticada
 export const especialistas = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  const allEspecialistas = await AppDataSource.manager.find(Especialista)
+  const allEspecialistas = await AppDataSource.manager.find(Especialista, {
+    where: { clinica: { id: req.userId } }
+  })
   res.status(200).json(allEspecialistas)
 }
 // Post

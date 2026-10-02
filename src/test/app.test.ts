@@ -16,8 +16,8 @@ afterAll(async () => {
 })
 
 describe('aplicação', () => {
-  test('responde à listagem pública de especialistas', async () => {
-    const resposta = await request(app).get('/especialista')
+  test('responde à listagem pública de clínicas', async () => {
+    const resposta = await request(app).get('/clinica')
 
     expect(resposta.status).toBe(200)
     expect(resposta.body).toEqual([])
