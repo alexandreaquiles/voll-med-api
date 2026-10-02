@@ -78,6 +78,8 @@ Além das rotas citadas acima, a correção do BOLA cobriu casos do mesmo tipo e
 
 As senhas passaram a ser gravadas como hash scrypt, com sal aleatório por senha e comparação em tempo constante (`src/utils/senhaUtils.ts`, testes em `src/test/senhas.test.ts`). As senhas já gravadas no formato antigo, de criptografia reversível, continuam aceitas: no primeiro login certo, a API as troca pelo hash.
 
+O login também deixou de revelar quais emails têm cadastro: email inexistente e senha errada recebem a mesma resposta (401, "Email ou senha inválidos"), e nos dois casos a senha é conferida contra um hash, para que o tempo de resposta não denuncie a diferença (`src/test/autenticacao.test.ts`).
+
 ### Pendências
 
 - **Fim da migração das senhas:** depois que todos os usuários tiverem feito login (ou num script que converta o resto), dá para remover a `SECRET_KEY_CRYPTO` e o código que confere o formato antigo.

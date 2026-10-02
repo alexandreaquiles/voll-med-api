@@ -27,4 +27,15 @@ describe('autenticação', () => {
 
     expect(resposta.status).toBe(200)
   })
+
+  // Respostas diferentes revelariam quais emails têm cadastro (por exemplo, quem é paciente da clínica)
+  test('responde igual para email inexistente e para senha errada', async () => {
+    const emailInexistente = await request(app).post('/auth/login').send({ email: 'ninguem@teste.com', senha: 'Senha@123' })
+    const senhaErrada = await request(app).post('/auth/login').send({ email: 'clinicaa@teste.com', senha: 'Errada@123' })
+
+    expect(emailInexistente.status).toBe(401)
+    expect(senhaErrada.status).toBe(401)
+    expect(emailInexistente.body).toEqual(senhaErrada.body)
+    expect(emailInexistente.body.message).toBe('Email ou senha inválidos')
+  })
 })

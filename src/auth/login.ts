@@ -1,4 +1,5 @@
 import { request, type Request, type Response } from 'express'
+import crypto from 'crypto'
 import { Autenticaveis } from './authEntity.js'
 import { access, refresh } from './tokens.js'
 
@@ -16,6 +17,9 @@ const TABELA_POR_PAPEL = {
   [Role.especialista]: Especialista,
   [Role.clinica]: Clinica
 }
+
+// Hash de uma senha aleatória, conferido quando o email não existe
+const HASH_DE_REFERENCIA = geraHashDeSenha(crypto.randomBytes(16).toString('hex'))
 
 // Troca uma senha ainda no formato antigo (criptografia reversível) pelo hash
 async function migraParaHash (id: string, role: Role, senha: string): Promise<void> {
@@ -53,13 +57,13 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
     where: { email }
   })
 
-  if (autenticavel == null) {
-    throw new AppError('Não encontrado!', 404)
+  // Email inexistente e senha errada têm a mesma resposta, e nos dois casos a senha é conferida
+  // contra um hash: diferenças na resposta ou no tempo revelariam quais emails têm cadastro
+  const senhaConfere = typeof senha === 'string' && confereSenha(senha, autenticavel?.senha ?? HASH_DE_REFERENCIA)
+  if (autenticavel == null || !senhaConfere) {
+    throw new AppError('Email ou senha inválidos', 401)
   } else {
     const { id, rota, role, senha: senhaAuth } = autenticavel
-    if (typeof senha !== 'string' || !confereSenha(senha, senhaAuth)) {
-      throw new AppError('Senha incorreta!', 401)
-    }
 
     if (!ehHashDeSenha(senhaAuth)) {
       await migraParaHash(id, role, senha)
