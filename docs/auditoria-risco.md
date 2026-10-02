@@ -2,6 +2,8 @@
 
 Data: 02/10/2026
 
+> **Status:** as três falhas foram corrigidas. Veja a seção [Correções](#correções) no fim do documento.
+
 ## Metodologia
 
 Foram analisados as rotas, os middlewares e os controllers da API. Cada falha foi depois confirmada com requisições reais contra a API rodando localmente (SQLite e Redis no Docker).
@@ -57,3 +59,21 @@ O cenário de teste tinha uma clínica, uma especialista e dois pacientes, Ana e
 1. **BOLA:** em toda rota com `:id`, exigir token e comparar `req.params.id` com `req.userId`, ou checar o vínculo (por exemplo, a consulta pertence ao paciente ou à clínica logada).
 2. **Dados sensíveis:** exigir autenticação nas listagens, devolver DTOs sem CPF, histórico e senha, trocar o `SELECT *` por colunas explícitas e guardar a senha com hash (bcrypt ou argon2), não com criptografia reversível.
 3. **Mass assignment:** usar uma lista de campos permitidos por papel. `historico` só pode ser escrito pelo especialista que atendeu, e `crm` e `estaAtivo` só pela clínica.
+
+## Correções
+
+Cada falha ganhou testes de integração que a reproduziam. Os testes falharam contra o código vulnerável, passaram depois da correção e foram commitados junto com ela.
+
+| Falha | Testes | Antes da correção | Correção |
+|---|---|---|---|
+| BOLA | `src/test/bola.test.ts` | 22 de 25 falhavam | middleware `verificaProprioUsuario` nas rotas `/:id`; consultas só para quem participa delas (`src/consultas/consultaAcesso.ts`) |
+| Exposição de dados sensíveis | `src/test/dadosSensiveis.test.ts` | 13 de 13 falhavam | listagens exigem token e mostram só os pacientes atendidos, sem CPF, histórico e senha; cadastros não devolvem senha |
+| Mass assignment | `src/test/massAssignment.test.ts` | 5 de 6 falhavam | cada operação aceita só os campos que cabem ao papel autenticado |
+
+Além das rotas citadas acima, a correção do BOLA cobriu casos do mesmo tipo encontrados durante o trabalho: `PATCH /especialista/:id` (sem token nenhum), `DELETE /especialista/:id`, as rotas de imagem do paciente e `PUT/DELETE/POST /clinica/:id`.
+
+### Pendências
+
+- **Senhas com criptografia reversível:** continuam em `src/utils/senhaUtils.ts`. Trocar por hash (bcrypt ou argon2) exige migrar as senhas já gravadas.
+- **Ids no corpo da requisição:** `POST /consulta` e `POST /avaliacoes` recebem o id do paciente no corpo e não exigem token, então qualquer pessoa marca consultas e publica avaliações em nome de outro paciente.
+- **Chaves JWT:** os tokens são assinados com `SECRET_KEY` e verificados com `SECRET_JWT`. Com valores diferentes, nenhum token é aceito.

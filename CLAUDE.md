@@ -35,6 +35,11 @@ O README indica Node 16; o Dockerfile usa `node:19`.
   - `Autenticaveis` é uma **ViewEntity** do TypeORM: um `UNION ALL` das tabelas `paciente`, `especialista` e `clinica`, com um dialeto SQL diferente para SQLite e MySQL. O login busca o email ali e retorna uma `rota` de acordo com o tipo de usuário.
   - Access tokens são JWTs (20 min) revogados por meio de uma blocklist no Redis. Refresh tokens são tokens opacos aleatórios (5 dias) mantidos em uma allowlist no Redis (`tokens.ts`).
   - As rotas são protegidas com `verificaTokenJWT(Role.x, ...)` (`middlewares/authMiddlewares.ts`), que define `req.userId` e `req.userRole` (tipados em `src/@types/express.d.ts`).
+- **Autorização por recurso** (ver `docs/auditoria-risco.md` e os testes `src/test/bola.test.ts`, `dadosSensiveis.test.ts` e `massAssignment.test.ts`):
+  - Rotas `/:id` de paciente, especialista e clínica usam `verificaTokenJWT(...)` seguido de `verificaProprioUsuario`, que exige `req.params.id === req.userId`. Quando a clínica também pode agir sobre o especialista (PUT/DELETE `/especialista/:id`), a checagem fica no controller.
+  - Quem vê quais consultas (e, por consequência, quais pacientes) está em `src/consultas/consultaAcesso.ts`: o paciente vê as próprias, o especialista as que atende e a clínica as dos seus especialistas.
+  - Respostas com dados de paciente fora do próprio paciente usam `resumoDoPaciente` (sem CPF, histórico e senha). Nenhuma resposta devolve `senha`.
+  - Controllers leem do `req.body` só os campos que o papel autenticado pode alterar. Histórico médico, CPF, situação e papel do paciente não são editáveis por ele; CRM, especialidade e situação do especialista, só pela clínica dele.
   - Atenção: os tokens são **assinados** com `SECRET_KEY`, mas **verificados** com `SECRET_JWT`.
 - **Senhas** são criptografadas de forma reversível com `SECRET_KEY_CRYPTO` (`utils/senhaUtils.ts`: `encryptPassword` / `decryptPassword`), e não armazenadas como hash.
 - **Entrada de paciente** passa por `pacienteSanitizations.ts`, depois pelo schema Yup em `pacienteYupSchema.ts`, com validação de CPF em `validacaoCPF.ts`.
